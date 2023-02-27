@@ -23,6 +23,10 @@ android {
     }
 
     buildTypes {
+        applicationVariants.all {
+            variant ->
+                variant.buildConfigField "String", "OPEN_WEATHER_API_KEY", "\""+getWeatherApiKey()+"\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -79,4 +83,10 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+static def getWeatherApiKey(){
+    Properties props = new Properties()
+    props.load(new FileInputStream(new File('secrets.properties')))
+    return props['OPEN_WEATHER_API_KEY']
 }
