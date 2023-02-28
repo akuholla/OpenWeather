@@ -20,8 +20,8 @@ class SharedPrefDataSource @Inject constructor(
 
     val getSavedLocationData: Flow<LocationData> = context.dataStore.data
         .map { preferences ->
-            val lat = preferences[LAT_DATA] ?: 0.0
-            val lon = preferences[LON_DATA] ?: 0.0
+            val lat = preferences[LAT_DATA] ?: 360.0
+            val lon = preferences[LON_DATA] ?: 360.0
             return@map LocationData(lat, lon)
         }
 
