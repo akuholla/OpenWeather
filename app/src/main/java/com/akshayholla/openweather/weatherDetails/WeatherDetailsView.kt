@@ -31,11 +31,13 @@ import com.akshayholla.openweather.weatherDetails.model.WeatherViewData
 //Stateful weather app screen
 @Composable
 fun WeatherAppScreen(
+    modifier: Modifier = Modifier,
     viewModel: WeatherDetailsViewModel,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             var searchText by rememberSaveable { mutableStateOf("") }
             OutlinedTextField(
