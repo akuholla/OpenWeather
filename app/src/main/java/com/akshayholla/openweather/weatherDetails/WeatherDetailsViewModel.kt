@@ -5,10 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.akshayholla.openweather.common.ErrorType
 import com.akshayholla.openweather.common.Response
 import com.akshayholla.openweather.common.Status
+import com.akshayholla.openweather.di.MainDispatcher
 import com.akshayholla.openweather.repository.OpenWeatherRepo
 import com.akshayholla.openweather.repository.UserRepo
 import com.akshayholla.openweather.weatherDetails.model.WeatherViewData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +22,7 @@ import javax.inject.Inject
 class WeatherDetailsViewModel @Inject constructor(
     private val openWeatherRepo: OpenWeatherRepo,
     private val userRepo: UserRepo,
+    @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<WeatherDetailsState>(WeatherDetailsState.Loading)
     val uiState: StateFlow<WeatherDetailsState> = _uiState
@@ -72,7 +75,7 @@ class WeatherDetailsViewModel @Inject constructor(
     }
 
     private fun handleWeatherResponseData(response: Response<WeatherViewData>) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(mainDispatcher) {
             when (response.status) {
                 Status.SUCCESS -> {
                     if (response.data != null) {
