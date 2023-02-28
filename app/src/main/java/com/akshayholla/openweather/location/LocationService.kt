@@ -23,8 +23,8 @@ class LocationService @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     @SuppressLint("MissingPermission")
     suspend fun getCurrentLocation(): LocationData = suspendCancellableCoroutine { continuation ->
-        var latitude = 0.0
-        var longitude = 0.0
+        val latitude = 360.0
+        val longitude = 360.0
         if (isLocationPermissionGranted()) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 continuation.resume(

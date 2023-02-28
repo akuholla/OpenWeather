@@ -37,7 +37,7 @@ class WeatherDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             val lastKnownLocation = userRepo.getLocationData().first()
 
-            if (lastKnownLocation.latitude == 0.0 && lastKnownLocation.longitude == 0.0) {
+            if (lastKnownLocation.latitude == 360.0 && lastKnownLocation.longitude == 360.0) {
                 // try to load data from live location
                 val locationResponse = openWeatherRepo.getWeatherByCurrentLocation()
 

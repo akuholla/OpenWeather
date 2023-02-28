@@ -64,7 +64,7 @@ class WeatherDetailsViewModelTest {
 
     @Test
     fun `If User location is 0,0 then get location current location`() = runTest {
-        flow.emit(LocationData(0.0, 0.0))
+        flow.emit(LocationData(360.0, 360.0))
 
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             subject.uiState.collect()
