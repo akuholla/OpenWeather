@@ -26,9 +26,7 @@ class LocationService @Inject constructor(
         var latitude = 0.0
         var longitude = 0.0
         if (isLocationPermissionGranted()) {
-            Log.d("Holla", "Location Permission Granted")
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                Log.d("Holla", "Fused location ${location}")
                 continuation.resume(
                     LocationData(
                         latitude = location.latitude, longitude = location.longitude
@@ -38,7 +36,6 @@ class LocationService @Inject constructor(
                     })
             }
         } else {
-            Log.d("Holla", "Location not Permission Granted")
             continuation.resume(LocationData(
                 latitude = latitude, longitude = longitude
             ), onCancellation = {

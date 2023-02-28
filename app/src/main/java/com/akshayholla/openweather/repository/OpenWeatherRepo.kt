@@ -50,7 +50,6 @@ class OpenWeatherRepo @Inject constructor(
         val locData = currentLocation.await()
         val lat = locData.latitude
         val lon = locData.longitude
-        Log.d("Holla", "Fetch location data = $currentLocation")
         return@coroutineScope if (lat == 0.0 && lon == 0.0) {
             Response.error("Could not fetch current location", ErrorType.LOCATION_ACCESS)
         } else {
