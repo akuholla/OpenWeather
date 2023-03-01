@@ -1,14 +1,23 @@
 # OpenWeatherMaps Api based weather application
     openweathermap.org
-
+    
+### Java version
+    - MVVM architecture
+    - Jetpack Compose - with state flow
+    - Jetpack datastore - shared prefrences
+    - RxJava3
+    - Play services - location
+    - Coil - image loader
+    - Unit Tests - mockito
 
 ### Kotlin version
     - MVVM architecture
     - Jetpack Compose - with state flow
-    - Jetpack datastore - share prefrences
+    - Jetpack datastore - shared prefrences
     - Coroutines & Flow
     - Play services - location
     - Coil - image loader
+    - Unit Tests - mockito
 
 ## Note to Developers
     - Add the openweather api key to secrets.properties
