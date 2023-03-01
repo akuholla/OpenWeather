@@ -6,22 +6,23 @@ import com.akshayholla.openweather.common.ErrorType
 import com.akshayholla.openweather.common.Response
 import com.akshayholla.openweather.common.Status
 import com.akshayholla.openweather.di.MainDispatcher
-import com.akshayholla.openweather.repository.OpenWeatherRepo
-import com.akshayholla.openweather.repository.UserRepo
+import com.akshayholla.openweather.location.model.LocationData
+import com.akshayholla.openweather.repository.OpenWeatherRepository
+import com.akshayholla.openweather.repository.UserRepository
 import com.akshayholla.openweather.weatherDetails.model.WeatherViewData
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WeatherDetailsViewModel @Inject constructor(
-    private val openWeatherRepo: OpenWeatherRepo,
-    private val userRepo: UserRepo,
+    private val openWeatherRepo: OpenWeatherRepository,
+    private val userRepo: UserRepository,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<WeatherDetailsState>(WeatherDetailsState.Loading)
@@ -34,24 +35,30 @@ class WeatherDetailsViewModel @Inject constructor(
     fun getSavedLocationWeather() {
         showLoading()
 
-        viewModelScope.launch {
-            val lastKnownLocation = userRepo.getLocationData().first()
+        val lastKnownLocation = userRepo.getSavedLoc().first(LocationData(360.0, 360.0))
 
-            if (lastKnownLocation.latitude == 360.0 && lastKnownLocation.longitude == 360.0) {
-                // try to load data from live location
-                val locationResponse = openWeatherRepo.getWeatherByCurrentLocation()
-
-                handleWeatherResponseData(locationResponse)
-            } else {
-                // ask user to either search for new location or enable permission to get current location weather data
-                val locationResponse = openWeatherRepo.getWeatherForCoordinates(
-                    lastKnownLocation.latitude,
-                    lastKnownLocation.longitude
-                )
-
-                handleWeatherResponseData(locationResponse)
+        //TODO: dispose these correctly: autodispose?
+        lastKnownLocation
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError {
+                //Try to get from current location
+                getWeatherFromCurrentLocation()
             }
-        }
+            .onErrorComplete()
+            .doOnSuccess {
+                val lat = it.latitude
+                val lon = it.longitude
+                // ask user to either search for new location or enable permission to get current location weather data
+                if (lat != 360.0 && lon != 360.0) {
+                    // get weather from last known coordinates
+                    getWeatherFromCoordinates(lat, lon)
+                } else {
+                    //Try to get from current location
+                    getWeatherFromCurrentLocation()
+                }
+            }
+            .subscribe()
     }
 
     fun getWeatherDataByCityName(cityName: String) {
@@ -63,11 +70,47 @@ class WeatherDetailsViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
-            val locationResponse = openWeatherRepo.getWeatherByCity(cityName)
+        //TODO : Error for different response codes are not yet handled
+        openWeatherRepo.getWeatherByCityName(cityName)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnError {
+                handleWeatherResponseData(Response.error(it.message ?: "", ErrorType.NETWORK))
+                it.printStackTrace()
+            }
+            .onErrorComplete()
+            .map {
+                try {
+                    handleWeatherResponseData(Response.success(it))
+                } catch (e: java.lang.Exception) {
+                    handleWeatherResponseData(Response.error(e.message ?: "", ErrorType.NETWORK))
+                    e.printStackTrace()
+                }
+            }.subscribe()
+    }
 
-            handleWeatherResponseData(locationResponse)
-        }
+    private fun getWeatherFromCurrentLocation() {
+        //TODO: Properly handle onError
+        openWeatherRepo.getWeatherByCurrentLocation()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread()).doOnError {
+                handleWeatherResponseData(Response.error(it.message ?: "", ErrorType.NETWORK))
+                it.printStackTrace()
+            }.onErrorComplete().map {
+                handleWeatherResponseData(Response.success(it))
+            }.subscribe()
+    }
+
+    private fun getWeatherFromCoordinates(lat: Double, lon: Double) {
+        //TODO: Dispose these
+        openWeatherRepo.getWeatherByCoordinates(lat, lon)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread()).doOnError {
+                handleWeatherResponseData(Response.error(it.message ?: "", ErrorType.NETWORK))
+                it.printStackTrace()
+            }.onErrorComplete().map {
+                handleWeatherResponseData(Response.success(it))
+            }.subscribe()
     }
 
     private fun showLoading() {

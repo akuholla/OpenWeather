@@ -88,10 +88,6 @@ fun WeatherAppScreen(
             }
         }
     }
-
-    fun onLocationPermissionAction() {
-        viewModel.getSavedLocationWeather()
-    }
 }
 
 //Stateless weather app content screen
@@ -350,27 +346,27 @@ fun PreviewOfSearchResultNotFound() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewOfWeatherDetails() {
-    OpenWeatherTheme {
-        WeatherDetails(
-            WeatherViewData(
-                cityName = "San Jose",
-                temperature = "34.0 C",
-                feelsLike = "30.0 C",
-                minTemp = "26.0 C",
-                maxTemp = "40.0 C",
-                title = "Snow",
-                description = "Winter is coming!",
-                icon = "http://...../",
-                pressure = "999.0 ",
-                humidity = "80%",
-                windDirection = "120d",
-                windSpeed = "200m/s",
-                sunset = "5:30 pm",
-                sunrise = "6:00 am"
-            )
-        )
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewOfWeatherDetails() {
+//    OpenWeatherTheme {
+//        WeatherDetails(
+//            WeatherViewData(
+//                cityName = "San Jose",
+//                temperature = "34.0 C",
+//                feelsLike = "30.0 C",
+//                minTemp = "26.0 C",
+//                maxTemp = "40.0 C",
+//                title = "Snow",
+//                description = "Winter is coming!",
+//                icon = "http://...../",
+//                pressure = "999.0 ",
+//                humidity = "80%",
+//                windDirection = "120d",
+//                windSpeed = "200m/s",
+//                sunset = "5:30 pm",
+//                sunrise = "6:00 am"
+//            )
+//        )
+//    }
+//}
