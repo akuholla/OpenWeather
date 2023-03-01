@@ -5,10 +5,11 @@
 ### Kotlin version
     - MVVM architecture
     - Jetpack Compose - with state flow
-    - Jetpack datastore - share prefrences
+    - Jetpack datastore - shared prefrences
     - Coroutines & Flow
     - Play services - location
     - Coil - image loader
+    - Unit Test - mockito
 
 ## Note to Developers
     - Add the openweather api key to secrets.properties
