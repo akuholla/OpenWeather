@@ -3,6 +3,7 @@ package com.akshayholla.openweather.repository
 import android.util.Log
 import com.akshayholla.openweather.common.DateUtil
 import com.akshayholla.openweather.common.ErrorType
+import com.akshayholla.openweather.common.INVALID_LOCATION_VALUE
 import com.akshayholla.openweather.common.Response
 import com.akshayholla.openweather.data.SharedPrefDataSource
 import com.akshayholla.openweather.data.network.OpenWeatherServiceProvider
@@ -10,17 +11,41 @@ import com.akshayholla.openweather.data.network.model.WeatherDetail
 import com.akshayholla.openweather.location.LocationService
 import com.akshayholla.openweather.location.model.LocationData
 import com.akshayholla.openweather.weatherDetails.model.WeatherViewData
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 class OpenWeatherRepo @Inject constructor(
     private val openWeatherServiceProvider: OpenWeatherServiceProvider,
     private val sharedPrefDataSource: SharedPrefDataSource,
-    private val locationService: LocationService
+    private val locationService: LocationService,
+    private val userRepo: UserRepo
 ) {
     //TODO: Units will move to a setting page
     val currentTemperatureUnit = "°C"
+
+    suspend fun getDefaultWeatherData(): Response<WeatherViewData> {
+        val lastKnownLocation = userRepo.getLastKnownLocation().first()
+
+        return if (isLocationValid(lastKnownLocation)) {
+            getWeatherForCoordinates(
+                latitude = lastKnownLocation.latitude,
+                longitude = lastKnownLocation.longitude
+            )
+        } else {
+            //Try to get from current location
+            getWeatherFromCurrentLocation()
+        }
+    }
+
+    suspend fun getWeatherFromCurrentLocation(): Response<WeatherViewData> {
+        val currentLocation = locationService.getCurrentLocation().first()
+
+        if (isLocationValid(currentLocation)) {
+            return getWeatherForCoordinates(currentLocation.latitude, currentLocation.longitude)
+        } else {
+            return Response.error("Could not fetch current location.", ErrorType.LOCATION_ACCESS)
+        }
+    }
 
     suspend fun getWeatherForCoordinates(
         latitude: Double,
@@ -45,17 +70,16 @@ class OpenWeatherRepo @Inject constructor(
         return handleWeatherResponse(weatherData)
     }
 
-    suspend fun getWeatherByCurrentLocation(): Response<WeatherViewData> = coroutineScope {
-        val currentLocation = async { locationService.getCurrentLocation() }
-        val locData = currentLocation.await()
-        val lat = locData.latitude
-        val lon = locData.longitude
-        return@coroutineScope if (lat == 0.0 && lon == 0.0) {
-            Response.error("Could not fetch current location", ErrorType.LOCATION_ACCESS)
-        } else {
-            getWeatherForCoordinates(lat, lon)
+    suspend fun getWeatherByCurrentLocation(): Flow<Response<WeatherViewData>> =
+        locationService.getCurrentLocation().map { locData ->
+            val lat = locData.latitude
+            val lon = locData.longitude
+            return@map if (lat == 0.0 && lon == 0.0) {
+                Response.error("Could not fetch current location", ErrorType.LOCATION_ACCESS)
+            } else {
+                getWeatherForCoordinates(lat, lon)
+            }
         }
-    }
 
     private suspend fun handleWeatherResponse(response: retrofit2.Response<WeatherDetail>): Response<WeatherViewData> {
         if (response.isSuccessful) {
@@ -96,5 +120,9 @@ class OpenWeatherRepo @Inject constructor(
                 icon = "https://openweathermap.org/img/wn/${it.weatherInfo.first().iconCode}@4x.png"
             )
         }
+    }
+
+    private fun isLocationValid(locData: LocationData): Boolean {
+        return locData.latitude != INVALID_LOCATION_VALUE && locData.longitude != INVALID_LOCATION_VALUE
     }
 }

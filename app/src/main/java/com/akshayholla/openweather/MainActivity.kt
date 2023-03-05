@@ -61,10 +61,10 @@ class MainActivity : ComponentActivity() {
     ) { permissions ->
         when {
             permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                weatherDetailsViewModel.getSavedLocationWeather()
+                weatherDetailsViewModel.locationPermissionGranted()
             }
             permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                weatherDetailsViewModel.getSavedLocationWeather()
+                weatherDetailsViewModel.locationPermissionGranted()
             }
             else -> {
             }

@@ -88,10 +88,6 @@ fun WeatherAppScreen(
             }
         }
     }
-
-    fun onLocationPermissionAction() {
-        viewModel.getSavedLocationWeather()
-    }
 }
 
 //Stateless weather app content screen

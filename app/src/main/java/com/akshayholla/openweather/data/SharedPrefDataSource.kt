@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.edit
 import com.akshayholla.openweather.common.dataStore
 import com.akshayholla.openweather.location.model.LocationData
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,12 +20,13 @@ class SharedPrefDataSource @Inject constructor(
     val LAT_DATA = doublePreferencesKey("lat_data")
     val LON_DATA = doublePreferencesKey("lon_data")
 
-    val getSavedLocationData: Flow<LocationData> = context.dataStore.data
-        .map { preferences ->
-            val lat = preferences[LAT_DATA] ?: 360.0
-            val lon = preferences[LON_DATA] ?: 360.0
-            return@map LocationData(lat, lon)
-        }
+    fun getSavedLocationData(): Flow<LocationData> =
+        context.dataStore.data
+            .map { preferences ->
+                val lat = preferences[LAT_DATA] ?: 360.0
+                val lon = preferences[LON_DATA] ?: 360.0
+                return@map LocationData(lat, lon)
+            }
 
     suspend fun saveLocationData(locationData: LocationData) {
         context.dataStore.edit { locData ->

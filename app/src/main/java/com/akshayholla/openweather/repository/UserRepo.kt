@@ -7,7 +7,7 @@ import javax.inject.Inject
 class UserRepo @Inject constructor(
     val sharedPrefDataSource: SharedPrefDataSource
 ) {
-    fun getLocationData() = sharedPrefDataSource.getSavedLocationData
+    fun getLastKnownLocation() = sharedPrefDataSource.getSavedLocationData()
 
     suspend fun saveLocationData(locationData: LocationData) =
         sharedPrefDataSource.saveLocationData(locationData = locationData)
