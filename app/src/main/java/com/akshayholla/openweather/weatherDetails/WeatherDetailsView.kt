@@ -15,12 +15,17 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.akshayholla.openweather.ui.theme.OpenWeatherTheme
@@ -34,8 +39,35 @@ fun WeatherAppScreen(
     modifier: Modifier = Modifier,
     viewModel: WeatherDetailsViewModel,
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val focusManager = LocalFocusManager.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val screenState by produceState<WeatherDetailsState>(
+        initialValue = WeatherDetailsState.Loading,
+        key1 = lifecycle,
+        key2 = viewModel
+    ) {
+        lifecycle.repeatOnLifecycle(state = Lifecycle.State.STARTED) {
+            viewModel.getWeatherData()
+            viewModel.uiState.collect {
+                value = it
+            }
+        }
+    }
+    WeatherAppMainScreen(
+        modifier = modifier,
+        state = screenState,
+        getWeatherByCityName = { viewModel.getWeatherDataByCityName(it) },
+        focusManager = focusManager
+    )
+}
 
+@Composable
+fun WeatherAppMainScreen(
+    modifier: Modifier,
+    state: WeatherDetailsState,
+    getWeatherByCityName: (String) -> Unit,
+    focusManager: FocusManager?
+) {
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -63,13 +95,14 @@ fun WeatherAppScreen(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions {
-                    viewModel.getWeatherDataByCityName(searchText)
+                    getWeatherByCityName(searchText)
+                    focusManager?.clearFocus()
                 }
             )
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            when (uiState) {
+            when (state) {
                 WeatherDetailsState.CityNotFound -> {
                     SearchResultNotFound()
                 }
@@ -83,7 +116,7 @@ fun WeatherAppScreen(
                     GenericError()
                 }
                 is WeatherDetailsState.WeatherData -> {
-                    WeatherDetails(weatherViewData = (uiState as WeatherDetailsState.WeatherData).weatherData)
+                    WeatherDetails(weatherViewData = state.weatherData)
                 }
             }
         }
