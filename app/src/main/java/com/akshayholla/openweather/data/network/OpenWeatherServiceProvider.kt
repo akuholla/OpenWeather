@@ -11,21 +11,21 @@ class OpenWeatherServiceProvider @Inject constructor(
 ) {
     suspend fun getWeatherByCoordinates(
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        units: String
     ): Response<WeatherDetail> {
         return openWeatherApi.getWeatherByCoordinates(
             latitude = latitude,
             longitude = longitude,
-            units = "metric",
-            //TODO: auto fetch units = "imperial",
+            units = units,
             appid = apiEnabler.getWeatherApiKey()
         )
     }
 
-    suspend fun getWeatherByCity(name: String): Response<WeatherDetail> {
+    suspend fun getWeatherByCity(name: String, units: String): Response<WeatherDetail> {
         return openWeatherApi.getWeatherByCityName(
             name = name,
-            units = "metric",
+            units = units,
             appid = apiEnabler.getWeatherApiKey()
         )
     }

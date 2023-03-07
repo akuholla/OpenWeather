@@ -13,4 +13,8 @@ class UserRepo @Inject constructor(
 
     suspend fun saveLocationData(locationData: LocationData) =
         sharedPrefDataSource.saveLocationData(locationData = locationData)
+
+    suspend fun saveUnit(unit: String) = sharedPrefDataSource.saveUserUnit(unit)
+
+    suspend fun getUnit() = sharedPrefDataSource.getUserUnit().first()
 }
