@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class LocationService @Inject constructor(
@@ -21,6 +22,22 @@ class LocationService @Inject constructor(
 ) {
     private var fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
+
+
+    //Alternate way of converting callbacks to coroutines
+    @SuppressLint("MissingPermission")
+    suspend fun getCurrentLoc() : LocationData = suspendCoroutine {
+        cont ->
+        if (isLocationPermissionGranted()) {
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                cont.resumeWith(Result.success(LocationData(it.latitude, it.longitude)))
+            }.addOnFailureListener {
+                cont.resumeWith(Result.success(LocationData(360.0, 360.0)))
+            }
+        } else {
+            cont.resumeWith(Result.success(LocationData(360.0, 360.0)))
+        }
+    }
 
     @SuppressLint("MissingPermission")
     fun getCurrentLocation(): Flow<LocationData> = callbackFlow {
