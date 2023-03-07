@@ -24,7 +24,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.akshayholla.openweather.ui.theme.OpenWeatherTheme
@@ -40,13 +42,12 @@ fun WeatherAppScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
     val screenState by produceState<WeatherDetailsState>(
         initialValue = WeatherDetailsState.Loading,
         key1 = lifecycle,
         key2 = viewModel
     ) {
-        lifecycleScope.launchWhenResumed {
+        lifecycle.repeatOnLifecycle(state = Lifecycle.State.RESUMED) {
             viewModel.getWeatherData()
             viewModel.uiState.collect {
                 value = it
