@@ -24,7 +24,7 @@ class OpenWeatherRepo @Inject constructor(
     val currentTemperatureUnit = "°C"
 
     suspend fun getDefaultWeatherData(): Response<WeatherViewData> {
-        val lastKnownLocation = userRepo.getLastKnownLocation().first()
+        val lastKnownLocation = userRepo.getLastKnownLocation()
 
         return if (isLocationValid(lastKnownLocation)) {
             getWeatherForCoordinates(
