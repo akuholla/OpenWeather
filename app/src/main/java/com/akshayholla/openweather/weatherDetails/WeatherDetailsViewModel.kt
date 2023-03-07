@@ -27,17 +27,17 @@ class WeatherDetailsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<WeatherDetailsState>(WeatherDetailsState.Loading)
     val uiState: StateFlow<WeatherDetailsState> = _uiState
 
-    init {
-        getWeatherData()
-    }
-    
     fun locationPermissionGranted() {
+        showLoading()
+
         viewModelScope.launch {
             handleWeatherResponseData(openWeatherRepo.getWeatherFromCurrentLocation())
         }
     }
 
-    private fun getWeatherData() {
+    fun getWeatherData() {
+        showLoading()
+
         viewModelScope.launch {
             handleWeatherResponseData(openWeatherRepo.getDefaultWeatherData())
         }
