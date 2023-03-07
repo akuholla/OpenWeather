@@ -3,7 +3,7 @@
 
 
 ### Kotlin version
-    - MVVM architecture
+    - MVI architecture
     - Jetpack Compose - with state flow
     - Jetpack datastore - shared prefrences
     - Coroutines & Flow
