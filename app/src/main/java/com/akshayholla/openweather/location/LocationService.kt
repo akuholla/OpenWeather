@@ -3,15 +3,18 @@ package com.akshayholla.openweather.location
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.content.ContextCompat
 import com.akshayholla.openweather.location.model.LocationData
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class LocationService @Inject constructor(
@@ -20,28 +23,51 @@ class LocationService @Inject constructor(
     private var fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+
+    //Alternate way of converting callbacks to coroutines
     @SuppressLint("MissingPermission")
-    suspend fun getCurrentLocation(): LocationData = suspendCancellableCoroutine { continuation ->
+    suspend fun getCurrentLoc() : LocationData = suspendCoroutine {
+        cont ->
+        if (isLocationPermissionGranted()) {
+            fusedLocationClient.lastLocation.addOnSuccessListener {
+                cont.resumeWith(Result.success(LocationData(it.latitude, it.longitude)))
+            }.addOnFailureListener {
+                cont.resumeWith(Result.success(LocationData(360.0, 360.0)))
+            }
+        } else {
+            cont.resumeWith(Result.success(LocationData(360.0, 360.0)))
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getCurrentLocation(): Flow<LocationData> = callbackFlow {
         val latitude = 360.0
         val longitude = 360.0
         if (isLocationPermissionGranted()) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                continuation.resume(
+                trySend(
                     LocationData(
                         latitude = location.latitude, longitude = location.longitude
-                    ), onCancellation = {
-                        //TODO: Handle this better
-                        it.printStackTrace()
-                    })
+                    )
+                )
+            }.addOnFailureListener {
+                trySend(
+                    LocationData(
+                        latitude = latitude, longitude = longitude
+                    )
+                )
             }
         } else {
-            continuation.resume(LocationData(
-                latitude = latitude, longitude = longitude
-            ), onCancellation = {
-                //TODO: Handle this better
-                it.printStackTrace()
-            })
+            trySend(
+                LocationData(
+                    latitude = latitude, longitude = longitude
+                )
+            )
+        }
+
+        awaitClose {
+            //Close the api callback
+            fusedLocationClient.flushLocations()
         }
     }
 

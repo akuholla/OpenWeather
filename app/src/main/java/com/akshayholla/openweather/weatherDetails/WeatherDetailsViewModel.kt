@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,36 +22,24 @@ import javax.inject.Inject
 @HiltViewModel
 class WeatherDetailsViewModel @Inject constructor(
     private val openWeatherRepo: OpenWeatherRepo,
-    private val userRepo: UserRepo,
     @MainDispatcher private val mainDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<WeatherDetailsState>(WeatherDetailsState.Loading)
     val uiState: StateFlow<WeatherDetailsState> = _uiState
 
-    init {
-        getSavedLocationWeather()
-    }
-
-    fun getSavedLocationWeather() {
+    fun locationPermissionGranted() {
         showLoading()
 
         viewModelScope.launch {
-            val lastKnownLocation = userRepo.getLocationData().first()
+            handleWeatherResponseData(openWeatherRepo.getWeatherFromCurrentLocation())
+        }
+    }
 
-            if (lastKnownLocation.latitude == 360.0 && lastKnownLocation.longitude == 360.0) {
-                // try to load data from live location
-                val locationResponse = openWeatherRepo.getWeatherByCurrentLocation()
+    fun getWeatherData() {
+        showLoading()
 
-                handleWeatherResponseData(locationResponse)
-            } else {
-                // ask user to either search for new location or enable permission to get current location weather data
-                val locationResponse = openWeatherRepo.getWeatherForCoordinates(
-                    lastKnownLocation.latitude,
-                    lastKnownLocation.longitude
-                )
-
-                handleWeatherResponseData(locationResponse)
-            }
+        viewModelScope.launch {
+            handleWeatherResponseData(openWeatherRepo.getDefaultWeatherData())
         }
     }
 

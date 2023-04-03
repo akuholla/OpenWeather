@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito
 import org.mockito.Mockito.*
 import org.mockito.kotlin.whenever
 
@@ -39,7 +38,7 @@ class WeatherDetailsViewModelTest {
     fun setup() {
         // TODO: if code is moved out of init block in the viewmodel,
         //      we could have the viewmodel initialized here before every test
-        whenever(mockUserRepo.getLocationData()).thenReturn(flow)
+        whenever(mockUserRepo.getLastKnownLocation()).thenReturn(flow)
 
         subject = WeatherDetailsViewModel(mockWeatherRepo, mockUserRepo, testDispatcher)
     }
@@ -59,7 +58,7 @@ class WeatherDetailsViewModelTest {
             subject.uiState.collect()
         }
 
-        verify(mockUserRepo).getLocationData()
+        verify(mockUserRepo).getLastKnownLocation()
     }
 
     @Test
